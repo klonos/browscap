@@ -325,7 +325,7 @@ function _browscap_import($cron = TRUE) {
       $last_parent = array();
       while ($vals['Parent'] && $vals['Parent'] !== $last_parent) {
         $vals = $a[$vals['Parent']];
-        $e = array_merge($vals, $e);
+        $e = array_merge((array)$vals, (array)$e);
         $last_parent = $vals;
       }
       $useragent = strtr($key, '*?', '%_');
