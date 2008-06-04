@@ -21,7 +21,7 @@ function browscap_install() {
                   is_crawler TINYINT(1) DEFAULT '0' NOT NULL,
                   PRIMARY KEY (parent)
                 ) TYPE=MyISAM /*!40100 DEFAULT CHARACTER SET utf8 */;");
-      $queries &= db_query("CREATE TABLE cache_browscap (
+      $queries &= db_query("CREATE TABLE {cache_browscap} (
                   cid varchar(255) NOT NULL default '',
                   `data` longblob,
                   expire int(11) NOT NULL default '0',
