@@ -70,7 +70,7 @@ function browscap_menu($may_cache) {
       $items[] = array(
         'path' => 'admin/logs/browscap/useragent',
         'callback' => 'browscap_useragent_properties',
-        'title' => arg(4),
+        'title' => 'Useragent details',
         'access' => $access, 
         'weight' => 5,
         'type' => MENU_LOCAL_TASK
@@ -206,7 +206,7 @@ function browscap_top_useragents($view = 'all') {
       $parent = l($useragent->parent, 'admin/logs/browscap/useragent/'. urlencode($useragent->parent));
     }
     else {
-      $parent = $useragent->parent;
+      $parent = check_plain($useragent->parent);
     }
     if ($view == 'all') {
       if ($useragent->is_crawler) {
@@ -366,7 +366,14 @@ function browscap_unmonitor() {
   }
 }
 
+/**
+ * Page callback to show details about known useragents.
+ *
+ * @param string $useragent a useragent, taken from the url.
+ * @return string an HTMl blob representing the data about this useragent.
+ */
 function browscap_useragent_properties($useragent = NULL) {
+  drupal_set_title(check_plain(arg(4)));
   if ($useragent == NULL) {
     drupal_not_found();
     return;
@@ -379,8 +386,8 @@ function browscap_useragent_properties($useragent = NULL) {
   $data = unserialize($row->data);
   $headers = array(t('property'), t('value'));
   foreach($data as $key => $val) {
-    $rows[] = array($key, $val);
+    $rows[] = array(check_plain($key), check_plain($val));
   }
-  $output = theme('table', $header, $rows);
+  $output = theme('table', $headers, $rows);
   return $output;
 }
