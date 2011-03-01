@@ -138,7 +138,7 @@ function browscap_settings() {
     '#type' => 'submit',
     '#value' => t('Refresh browscap data'),
   );
-  return system_settings_form($form);
+  return $form;
 }
 
 /**
