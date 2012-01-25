@@ -77,7 +77,7 @@ function browscap_exit() {
     if ($browser = browscap_get_browser()) {
       $browserstring = substr(trim($browser['parent']), 0, 255);
       if ($browserstring == '' or $browserstring == 'Default Browser') {
-        $browserstring = trim($_SERVER['HTTP_USER_AGENT']);
+        $browserstring = substr(trim($_SERVER['HTTP_USER_AGENT']), 0, 255);
       }
       db_query("UPDATE {browscap_statistics} SET counter = counter + 1, is_crawler=%d ".
         "WHERE parent='%s'", $browser['crawler'], $browserstring);
