@@ -1,11 +1,15 @@
 <?php
+/**
+ * @file
+ * Install, update and uninstall functions for the Browscap module.
+ */
 
 /**
  * Implementation of hook_install.
  */
 function browscap_install() {
   drupal_install_schema('browscap');
-} // browscap_install
+}
 
 /**
  * Implementation of hook_schema.
@@ -13,27 +17,71 @@ function browscap_install() {
 function browscap_schema() {
   $schema['browscap'] = array(
     'fields' => array(
-      'useragent' => array('type' => 'varchar', 'length' => 255, 'not null' => TRUE, 'default' => ''),
-      'data' => array('type' => 'blob', 'size' => 'big'),
+      'useragent' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'data' => array(
+        'type' => 'blob',
+        'size' => 'big',
+      ),
     ),
     'primary key' => array('useragent'),
   );
   $schema['browscap_statistics'] = array(
     'fields' => array(
-      'parent' => array('type' => 'varchar', 'length' => 255, 'not null' => TRUE, 'default' => ''),
-      'counter' => array('type' => 'int', 'not null' => TRUE, 'default' => 0),
-      'is_crawler' => array('type' => 'int', 'size' => 'tiny', 'not null' => TRUE),
+      'parent' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'counter' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'is_crawler' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+      ),
     ),
     'primary key' => array('parent'),
   );
   $schema['cache_browscap'] = array(
     'fields' => array(
-      'cid' => array('type' => 'varchar', 'length' => 255, 'not null' => TRUE, 'default' => ''),
-      'data' => array('type' => 'blob', 'size' => 'big'),
-      'expire' => array('type' => 'int', 'not null' => TRUE, 'default' => 0),
-      'created' => array('type' => 'int', 'not null' => TRUE, 'default' => 0),
-      'headers' => array('type' => 'text'),
-      'serialized' => array('type' => 'int', 'size' => 'small', 'not null' => TRUE, 'default' => 0),
+      'cid' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'data' => array(
+        'type' => 'blob',
+        'size' => 'big',
+      ),
+      'expire' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'created' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'headers' => array(
+        'type' => 'text',
+      ),
+      'serialized' => array(
+        'type' => 'int',
+        'size' => 'small',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
     ),
     'primary key' => array('cid'),
     'indexes' => array(
@@ -41,14 +89,17 @@ function browscap_schema() {
     ),
   );
   return $schema;
-} // browscap_schema
+}
 
+/**
+ * Implementation of hook_uninstall.
+ */
 function browscap_uninstall() {
   drupal_uninstall_schema('browscap');
   variable_del('browscap_monitor');
   variable_del('browscap_imported');
   variable_del('browscap_version');
-} // browscap_uninstall
+}
 
 /**
  * Updates existing tables to UTF-8.
@@ -56,16 +107,16 @@ function browscap_uninstall() {
 function browscap_update_1() {
   return _system_update_utf8(array('browscap'));
   return _system_update_utf8(array('browscap_statistics'));
-} // browscap_update_1
+}
 
 /**
  * Implementation of hook_update_N.
  * Update from D5 to D6.
  */
 function browscap_update_6000() {
-  $ret = array();
+  $return = array();
   if (!db_column_exists('cache_browscap', 'serialized')) {
-    db_add_field($ret, 'cache_browscap', 'serialized', array('type' => 'int', 'size' => 'small', 'not null' => TRUE, 'default' => 0));
+    db_add_field($return, 'cache_browscap', 'serialized', array('type' => 'int', 'size' => 'small', 'not null' => TRUE, 'default' => 0));
   }
-  return $ret;
+  return $return;
 }
