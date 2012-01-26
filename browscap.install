@@ -4,11 +4,21 @@
  * Install, update and uninstall functions for the Browscap module.
  */
 
+// Include the browscap information retrieval functions
+include_once('browscap.module');
+
 /**
  * Implementation of hook_install.
  */
 function browscap_install() {
+  // Create tables
   drupal_install_schema('browscap');
+
+  // Update the browscap information
+  _browscap_import();
+
+  // Record when the browscap information was updated
+  variable_set('browscap_imported', REQUEST_TIME);
 }
 
 /**
