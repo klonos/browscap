@@ -9,6 +9,16 @@
  * ******************** Drupal Hooks ************************
  */
 
+ /**
+ * Implementation of hook_perm().
+ */
+function browscap_perm() {
+  return array(
+    'administer browscap',
+    'view browscap reports',
+  );
+}
+
 /**
  * Implementation of hook_menu().
  *
@@ -21,11 +31,11 @@ function browscap_menu() {
     'description' => 'Browser-specific site statistics.',
     'page callback' => 'browscap_top_useragents',
     'page arguments' => array('all'),
-    'access arguments' => array('access administration pages'),
+    'access arguments' => array('view browscap reports'),
     'weight' => 5);
   $items['admin/reports/browscap/useragents'] = array(
     'title' => 'All user agents',
-    'access arguments' => array('access administration pages'),
+    'access arguments' => array('view browscap reports'),
     'weight' => 1,
     'type' => MENU_DEFAULT_LOCAL_TASK
   );
@@ -33,7 +43,7 @@ function browscap_menu() {
     'title' => 'Browsers',
     'page callback' => 'browscap_top_useragents',
     'page arguments' => array('browsers'),
-    'access arguments' => array('access administration pages'),
+    'access arguments' => array('view browscap reports'),
     'weight' => 2,
     'type' => MENU_LOCAL_TASK
   );
@@ -41,7 +51,7 @@ function browscap_menu() {
     'title' => 'Crawlers',
     'page callback' => 'browscap_top_useragents',
     'page arguments' => array('crawlers'),
-    'access arguments' => array('access administration pages'),
+    'access arguments' => array('view browscap reports'),
     'weight' => 3,
     'type' => MENU_LOCAL_TASK
   );
@@ -52,14 +62,14 @@ function browscap_menu() {
     'description' => 'Enable browscap site statistics.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('browscap_settings'),
-    'access arguments' => array('administer site configuration'),
+    'access arguments' => array('administer browscap'),
   );
 
   $items['admin/reports/browscap/useragent/%browscap_useragent'] = array(
     'title' => 'Useragent details',
     'page callback' => 'browscap_useragent_properties',
     'page arguments' => array(4),
-    'access arguments' => array('access administration pages'),
+    'access arguments' => array('view browscap reports'),
     'weight' => 5,
     'type' => MENU_LOCAL_TASK
   );
