@@ -24,10 +24,11 @@ function browscap_menu() {
     'page callback' => 'browscap_top_useragents',
     'page arguments' => array('all'),
     'access arguments' => array('view browscap reports'),
+    'file' => 'browscap.reports.inc',
     'weight' => 5,
   );
   $items['admin/reports/browscap/useragents'] = array(
-    'title' => 'All user agents',
+    'title' => 'All',
     'access arguments' => array('view browscap reports'),
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => 1,
@@ -37,6 +38,7 @@ function browscap_menu() {
     'page callback' => 'browscap_top_useragents',
     'page arguments' => array('browsers'),
     'access arguments' => array('view browscap reports'),
+    'file' => 'browscap.reports.inc',
     'type' => MENU_LOCAL_TASK,
     'weight' => 2,
   );
@@ -45,6 +47,7 @@ function browscap_menu() {
     'page callback' => 'browscap_top_useragents',
     'page arguments' => array('crawlers'),
     'access arguments' => array('view browscap reports'),
+    'file' => 'browscap.reports.inc',
     'type' => MENU_LOCAL_TASK,
     'weight' => 3,
   );
@@ -54,12 +57,14 @@ function browscap_menu() {
     'page callback' => 'drupal_get_form',
     'page arguments' => array('browscap_settings'),
     'access arguments' => array('administer browscap'),
+    'file' => 'browscap.admin.inc',
   );
   $items['admin/reports/browscap/useragent/%browscap_useragent'] = array(
     'title' => 'Useragent details',
     'page callback' => 'browscap_useragent_properties',
     'page arguments' => array(4),
     'access arguments' => array('view browscap reports'),
+    'file' => 'browscap.user_agent.inc',
     'type' => MENU_LOCAL_TASK,
     'weight' => 5,
   );
@@ -101,135 +106,6 @@ function browscap_cron() {
     _browscap_import();
     variable_set('browscap_imported', time());
   }
-}
-
-/**
- * Callback for settings form.
- * Turn monitoring on or off and refresh the reference data.
- */
-function browscap_settings() {
-  $form['browscap_data_status'] = array(
-    '#markup' => '<p>' . t('Current browscap data version: %fileversion.', array('%fileversion' => $version ? $version : t('Never fetched'))) . '</p>',
-  );
-  $form['browscap_monitor'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Monitor browsers'),
-    '#default_value' => variable_get('browscap_monitor', FALSE),
-    '#description' => t('Monitor all user agents visiting the site. View the reports in the <a href="!reports">Browscap reports</a> area.', array('!reports' => url('admin/reports/browscap'))),
-  );
-  $form['save'] = array(
-    '#type' => 'submit',
-    '#value' => t('Save'),
-  );
-  $form['refresh'] = array(
-    '#type' => 'submit',
-    '#value' => t('Refresh browscap data'),
-  );
-  return $form;
-}
-
-/**
- * Submit handler for settings page.
- */
-function browscap_settings_submit($form, &$form_state) {
-  switch ($form_state['clicked_button']['#id']) {
-    case 'edit-save':
-      variable_set('browscap_monitor', $form_state['values']['browscap_monitor']);
-      break;
-    case 'edit-refresh':
-      _browscap_import(FALSE);
-      break;
-  }
-}
-
-/**
- * Menu callback; presents the user agents monitoring page.
- *
- * @param $view
- *   - "browsers": Only display "real" browsers
- *   - "crawlers": Only display search engine crawlers
- *   - "all": Display all user agents.
- */
-function browscap_top_useragents($view = 'all') {
-  if ($view == 'all') {
-    $result = db_query('SELECT SUM(counter) FROM {browscap_statistics}');
-    $total = db_result($result);
-    if (!$total) $total = 1;
-    $query = "SELECT parent,counter,(100*counter)/$total as percent,is_crawler FROM {browscap_statistics}";
-    $query_cnt = 'SELECT COUNT(parent) FROM {browscap_statistics}';
-    $title = t('Top user agents');
-    $header = array(
-      array('data' => t('User agent'), 'field' => 'parent'),
-      array('data' => t('Count'), 'field' => 'counter', 'sort' => 'desc'),
-      array('data' => t('Percent'), 'field' => 'percent'),
-      array('data' => t('Crawler?'), 'field' => 'is_crawler')
-    );
-  }
-  elseif ($view == 'browsers') {
-    $result = db_query('SELECT SUM(counter) FROM {browscap_statistics} WHERE is_crawler=0');
-    $total = db_result($result);
-    if (!$total) $total = 1;
-    $query = "SELECT parent,counter,(100*counter)/$total as percent FROM {browscap_statistics} WHERE is_crawler=0";
-    $query_cnt = 'SELECT COUNT(parent) FROM {browscap_statistics} WHERE is_crawler=0';
-    $title = t('Top browsers');
-    $header = array(
-      array('data' => t('Browser'), 'field' => 'parent'),
-      array('data' => t('Count'), 'field' => 'counter', 'sort' => 'desc'),
-      array('data' => t('Percent'), 'field' => 'percent')
-    );
-  }
-  else {
-    $result = db_query('SELECT SUM(counter) FROM {browscap_statistics} WHERE is_crawler=1');
-    $total = db_result($result);
-    if (!$total) $total = 1;
-    $query = "SELECT parent,counter,(100*counter)/$total as percent FROM {browscap_statistics} WHERE is_crawler=1";
-    $query_cnt = 'SELECT COUNT(parent) FROM {browscap_statistics} WHERE is_crawler=1';
-    $title = t('Top crawlers');
-    $header = array(
-      array('data' => t('Crawler'), 'field' => 'parent'),
-      array('data' => t('Count'), 'field' => 'counter', 'sort' => 'desc'),
-      array('data' => t('Percent'), 'field' => 'percent')
-    );
-  }
-
-  drupal_set_title($title);
-
-  $query .= tablesort_sql($header);
-
-  $result = pager_query($query, 50, 0, $query_cnt);
-  $rows = array();
-
-  while ($useragent = db_fetch_object($result)) {
-    if (db_result(db_query_range("SELECT useragent FROM {browscap} WHERE useragent = '%s'", $useragent->parent, 0, 1))) {
-      $parent = l($useragent->parent, 'admin/reports/browscap/useragent/'. urlencode($useragent->parent));
-    }
-    else {
-      $parent = check_plain($useragent->parent);
-    }
-    if ($view == 'all') {
-      if ($useragent->is_crawler) {
-        $is_crawler = t('Yes');
-      }
-      else {
-        $is_crawler = t('No');
-      }
-      $rows[] = array($parent, $useragent->counter, $useragent->percent, $is_crawler);
-    }
-    else {
-      $rows[] = array($parent, $useragent->counter, $useragent->percent);
-    }
-  }
-  if ($pager = theme('pager', NULL, 50, 0)) {
-    $rows[] = array(array('data' => $pager, 'colspan' => 2));
-  }
-
-  $output = '';
-  if (empty($rows)) {
-    $output .= t('It appears that your site has not recorded any visits. If you want to record the visitors to your site you can enable "Monitor browsers" on the <a href="!settings_uri">Browscap settings screen</a>.', array('!settings_uri' => url('admin/settings/browscap')));
-  }
-  $output .= theme('table', $header, $rows);
-
-  print theme('page', $output, $title);
 }
 
 /**
@@ -418,21 +294,4 @@ function browscap_useragent_load($useragent = NULL) {
     return FALSE;
   }
   return unserialize($row->data);
-}
-
-/**
- * Page callback to show details about known useragents.
- *
- * @param $useragent
- *   The useragent object, loaded from the database.
- * @return string an HTMl blob representing the data about this useragent.
- */
-function browscap_useragent_properties($useragent = NULL) {
-  drupal_set_title(check_plain($useragent['browser'] .' '. $useragent['version']));
-  $headers = array(t('Property'), t('Value'));
-  foreach ($useragent as $key => $val) {
-    $rows[] = array(check_plain($key), check_plain($val));
-  }
-  $output = theme('table', $headers, $rows);
-  return $output;
 }
