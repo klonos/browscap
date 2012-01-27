@@ -1,15 +1,10 @@
 <?php
-
 /**
  * @file
- * Replacement for PHP's get_browser() function
+ * Replacement for PHP's get_browser() function.
  */
 
 /**
- * ******************** Drupal Hooks ************************
- */
-
- /**
  * Implementation of hook_perm().
  */
 function browscap_perm() {
@@ -21,42 +16,38 @@ function browscap_perm() {
 
 /**
  * Implementation of hook_menu().
- *
- * @return array
  */
 function browscap_menu() {
-  // LOG PAGES
   $items['admin/reports/browscap'] = array(
     'title' => 'Browscap',
     'description' => 'Browser-specific site statistics.',
     'page callback' => 'browscap_top_useragents',
     'page arguments' => array('all'),
     'access arguments' => array('view browscap reports'),
-    'weight' => 5);
+    'weight' => 5,
+  );
   $items['admin/reports/browscap/useragents'] = array(
     'title' => 'All user agents',
     'access arguments' => array('view browscap reports'),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => 1,
-    'type' => MENU_DEFAULT_LOCAL_TASK
   );
   $items['admin/reports/browscap/browsers'] = array(
     'title' => 'Browsers',
     'page callback' => 'browscap_top_useragents',
     'page arguments' => array('browsers'),
     'access arguments' => array('view browscap reports'),
+    'type' => MENU_LOCAL_TASK,
     'weight' => 2,
-    'type' => MENU_LOCAL_TASK
   );
   $items['admin/reports/browscap/crawlers'] = array(
     'title' => 'Crawlers',
     'page callback' => 'browscap_top_useragents',
     'page arguments' => array('crawlers'),
     'access arguments' => array('view browscap reports'),
+    'type' => MENU_LOCAL_TASK,
     'weight' => 3,
-    'type' => MENU_LOCAL_TASK
   );
-
-  // SETTINGS PAGE
   $items['admin/settings/browscap'] = array(
     'title' => 'Browscap',
     'description' => 'Enable browscap site statistics.',
@@ -64,14 +55,13 @@ function browscap_menu() {
     'page arguments' => array('browscap_settings'),
     'access arguments' => array('administer browscap'),
   );
-
   $items['admin/reports/browscap/useragent/%browscap_useragent'] = array(
     'title' => 'Useragent details',
     'page callback' => 'browscap_useragent_properties',
     'page arguments' => array(4),
     'access arguments' => array('view browscap reports'),
+    'type' => MENU_LOCAL_TASK,
     'weight' => 5,
-    'type' => MENU_LOCAL_TASK
   );
   return $items;
 }
@@ -114,36 +104,23 @@ function browscap_cron() {
 }
 
 /**
- * ******************** Menu Callbacks ************************
- */
-
-/**
  * Callback for settings form.
  * Turn monitoring on or off and refresh the reference data.
- *
- * @return array
  */
 function browscap_settings() {
   $form['browscap_data_status'] = array(
-    '#markup' => '<p>' . t('Current browscap data version: %fileversion.',
-                   array('%fileversion' => $version ? $version : t('Never fetched'))) . '</p>',
+    '#markup' => '<p>' . t('Current browscap data version: %fileversion.', array('%fileversion' => $version ? $version : t('Never fetched'))) . '</p>',
   );
-
   $form['browscap_monitor'] = array(
     '#type' => 'checkbox',
     '#title' => t('Monitor browsers'),
     '#default_value' => variable_get('browscap_monitor', FALSE),
-    '#description' => t('Monitor all user agents visiting the site. View the reports in the <a href="!reports">Browscap reports</a> area.',
-                        array(
-                          '!reports' => url('admin/reports/browscap'),
-                        )),
+    '#description' => t('Monitor all user agents visiting the site. View the reports in the <a href="!reports">Browscap reports</a> area.', array('!reports' => url('admin/reports/browscap'))),
   );
-
   $form['save'] = array(
     '#type' => 'submit',
     '#value' => t('Save'),
   );
-
   $form['refresh'] = array(
     '#type' => 'submit',
     '#value' => t('Refresh browscap data'),
@@ -153,14 +130,12 @@ function browscap_settings() {
 
 /**
  * Submit handler for settings page.
- *
  */
 function browscap_settings_submit($form, &$form_state) {
   switch ($form_state['clicked_button']['#id']) {
     case 'edit-save':
       variable_set('browscap_monitor', $form_state['values']['browscap_monitor']);
       break;
-
     case 'edit-refresh':
       _browscap_import(FALSE);
       break;
@@ -364,7 +339,7 @@ function _browscap_import($cron = TRUE) {
   // single-quote (') characters in the section strings, either of which will
   // cause parse_ini_file() to abort and return FALSE.  To fix this, simply
   // escape them with the backslash character.
-  $browscap->data = preg_replace(array("/(?<![;\n])([;'])/",'/\A\\\\/'), array('\\\\$1',''), $browscap->data);
+  $browscap->data = preg_replace(array("/(?<![;\n])([;'])/", '/\A\\\\/'), array('\\\\$1', ''), $browscap->data);
 
   $browscapfp = fopen($browscapfile, "w");
   fwrite($browscapfp, $browscap->data);
@@ -422,8 +397,7 @@ function browscap_unmonitor() {
     if ($browserstring == '' or $browserstring == 'Default Browser') {
       $browserstring = trim($_SERVER['HTTP_USER_AGENT']);
     }
-    db_query("UPDATE {browscap_statistics} SET counter = counter - 1, is_crawler=%d ".
-      "WHERE parent='%s'", $browser->crawler, $browserstring);
+    db_query("UPDATE {browscap_statistics} SET counter = counter - 1, is_crawler=%d " . "WHERE parent='%s'", $browser->crawler, $browserstring);
   }
 }
 
