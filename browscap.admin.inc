@@ -5,12 +5,21 @@
  */
 
 /**
- * Callback for settings form.
- * Turn monitoring on or off and refresh the reference data.
+ * Implementation of hook_form().
  */
-function browscap_settings() {
+function browscap_settings_form(&$form_state) {
+  $version = variable_get('browscap_version', 0);
   $form['browscap_data_status'] = array(
-    '#markup' => '<p>' . t('Current browscap data version: %fileversion.', array('%fileversion' => $version ? $version : t('Never fetched'))) . '</p>',
+    '#value' => '<p>' . t('Current browscap data version: %fileversion.', array('%fileversion' => $version ? $version : t('Never fetched'))) . '</p>',
+  );
+  $form['browscap_update_interval'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Update interval'),
+    '#default_value' => variable_get('browscap_update_interval', 7),
+    '#description' => t('Control how often Browscap checks for new browser information. Enter 0 to disable updating.'),
+    '#field_suffix' => t('days'),
+    '#size' => 3,
+    '#maxlength' => 3,
   );
   $form['browscap_monitor'] = array(
     '#type' => 'checkbox',
@@ -18,27 +27,36 @@ function browscap_settings() {
     '#default_value' => variable_get('browscap_monitor', FALSE),
     '#description' => t('Monitor all user agents visiting the site. View the reports in the <a href="!reports">Browscap reports</a> area.', array('!reports' => url('admin/reports/browscap'))),
   );
-  $form['save'] = array(
-    '#type' => 'submit',
-    '#value' => t('Save'),
-  );
-  $form['refresh'] = array(
+  $form['buttons']['browscap_refresh'] = array(
     '#type' => 'submit',
     '#value' => t('Refresh browscap data'),
+    '#submit' => array('browscap_refresh_submit'),
+    '#weight' => 10,
   );
-  return $form;
+  return system_settings_form($form);
 }
 
 /**
- * Submit handler for settings page.
+ * Validate the settings form.
  */
-function browscap_settings_submit($form, &$form_state) {
-  switch ($form_state['clicked_button']['#id']) {
-    case 'edit-save':
-      variable_set('browscap_monitor', $form_state['values']['browscap_monitor']);
-      break;
-    case 'edit-refresh':
-      _browscap_import(FALSE);
-      break;
+function browscap_settings_form_validate($form, &$form_state) {
+  $update_interval = $form_state['values']['browscap_update_interval'];
+
+  // Ensure that the update interval is a number
+  if (!is_numeric($update_interval)) {
+    form_set_error('browscap_update_interval', t('The update interval must be a number.'));
   }
+
+  // Ensure that the update interval is a non-negative number
+  if ($update_interval < 0) {
+    form_set_error('browscap_update_interval', t('The update interval must be non-negative.'));
+  }
+}
+
+/**
+ * Submit handler for the refresh browscap button.
+ */
+function browscap_refresh_submit($form, &$form_state) {
+  _browscap_import(FALSE);
+  variable_set('browscap_imported', REQUEST_TIME);
 }
