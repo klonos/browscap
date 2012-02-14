@@ -5,18 +5,39 @@
  */
 
 /**
- * Page callback to show details about known useragents.
+ * Page callback to show details about a specific user agent.
  *
- * @param $useragent
- *   The useragent object, loaded from the database.
- * @return string an HTMl blob representing the data about this useragent.
+ * @param $user_agent
+ *   A user agent string.
  */
-function browscap_useragent_properties($useragent = NULL) {
-  drupal_set_title(check_plain($useragent['browser'] .' '. $useragent['version']));
-  $headers = array(t('Property'), t('Value'));
-  foreach ($useragent as $key => $val) {
-    $rows[] = array(check_plain($key), check_plain($val));
+function browscap_useragent_properties($user_agent = NULL) {
+  // Attempt to find an entry in the database about the given user agent
+  $user_agent_data = db_fetch_object(db_query("SELECT * FROM {browscap} WHERE useragent = '%s'", $user_agent));
+
+  // Create an array to hold user agent properties
+  $rows = array();
+
+  // If an entry in the database about the current user agent exists
+  // unserialize the entry and find all of the user agent properties and
+  // values contained within the entry
+  if ($user_agent_data) {
+    // Unserialize the database entry
+    $user_agent_properties = unserialize($user_agent_data->data);
+
+    // Find all of the user agent properties and values
+    foreach ($user_agent_properties as $property => $value) {
+      $rows[] = array(check_plain($property), check_plain($value));
+    }
   }
-  $output = theme('table', $headers, $rows);
-  return $output;
+
+  // Create an array of table headers
+  $header = array(
+    t('Property'),
+    t('Value'),
+  );
+
+  // Build the table of user agent properties
+  $build = theme('table', $header, $rows);
+
+  return $build;
 }
