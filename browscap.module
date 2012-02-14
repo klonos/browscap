@@ -76,25 +76,40 @@ function browscap_menu() {
 
 /**
  * Implementation of hook_exit().
- *
- * Keep tabs on browsers that visit
  */
 function browscap_exit() {
-  // If monitoring is enabled, record the browser
-  if (variable_get('browscap_monitor', FALSE)) {
-    if ($browser = browscap_get_browser()) {
-      $browserstring = substr(trim($browser['parent']), 0, 255);
-      if ($browserstring == '' or $browserstring == 'Default Browser') {
-        $browserstring = substr(trim($_SERVER['HTTP_USER_AGENT']), 0, 255);
-      }
-      db_query("UPDATE {browscap_statistics} SET counter = counter + 1, is_crawler=%d ".
-        "WHERE parent='%s'", $browser['crawler'], $browserstring);
-      // If we affected 0 rows, this is the first time we've seen this browser
-      if (!db_affected_rows()) {
-        // We must create a new row to store counters for the new browser.
-        db_query('INSERT INTO {browscap_statistics} (parent,counter,is_crawler) '.
-          "VALUES('%s', 1, %d)", $browserstring, $browser['crawler']);
-      }
+  // Check the status of user agent monitoring
+  $monitoring = variable_get('browscap_monitor', FALSE);
+
+  // Record the current user agent if monitoring is enabled
+  if ($monitoring == TRUE) {
+    // Get browscap data about the current user agent
+    $user_agent = browscap_get_browser();
+
+    // Identify the user agent using browscap data
+    // Otherwise, use the USER_AGENT header from the current request
+    if (!empty($user_agent['parent'])) {
+      $user_agent_string = substr(trim($user_agent['parent']), 0, 255);
+    }
+    else {
+      $user_agent_string = substr(trim($_SERVER['HTTP_USER_AGENT']), 0, 255);
+    }
+
+    // Determine if the user agent is a crawler using browscap data
+    // Otherwise, assume that the user agent isn't a crawler
+    if (!empty($user_agent['crawler'])) {
+      $user_agent_crawler = $user_agent['crawler'];
+    }
+    else {
+      $user_agent_crawler = 0;
+    }
+
+    // Record the user agent in the database
+    db_query("UPDATE {browscap_statistics} SET counter = counter + 1, is_crawler=%d WHERE parent='%s'", $user_agent_crawler, $user_agent_string);
+    // If no rows were affected then this is the first time that the current user agent has been encountered
+    if (!db_affected_rows()) {
+      // Create a new row to store counters for the user agent
+      db_query("INSERT INTO {browscap_statistics} (parent,counter,is_crawler) VALUES('%s', 1, %d)", $user_agent_string, $user_agent_crawler);
     }
   }
 }
