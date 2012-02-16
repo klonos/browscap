@@ -106,6 +106,7 @@ function browscap_schema() {
  */
 function browscap_uninstall() {
   drupal_uninstall_schema('browscap');
+
   variable_del('browscap_imported');
   variable_del('browscap_monitor');
   variable_del('browscap_update_interval');
@@ -126,8 +127,10 @@ function browscap_update_1() {
  */
 function browscap_update_6000() {
   $return = array();
+
   if (!db_column_exists('cache_browscap', 'serialized')) {
     db_add_field($return, 'cache_browscap', 'serialized', array('type' => 'int', 'size' => 'small', 'not null' => TRUE, 'default' => 0));
   }
+
   return $return;
 }
