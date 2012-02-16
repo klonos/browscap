@@ -5,7 +5,7 @@
  */
 
 // Include the browscap information retrieval functions
-include_once('browscap.module');
+include_once('import.inc');
 
 /**
  * Implementation of hook_install.
