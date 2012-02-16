@@ -170,7 +170,7 @@ function browscap_get_browser($user_agent = NULL) {
     // The useragent column contains the wildcarded pattern to match against our
     // full-length string while the ORDER BY chooses the most-specific matching
     // pattern
-    $user_agent_properties = db_fetch_object(db_query_range("SELECT * from {browscap} WHERE '%s' LIKE useragent ORDER BY LENGTH(useragent) DESC", $useragent, 0, 1));
+    $user_agent_properties = db_fetch_object(db_query_range("SELECT * from {browscap} WHERE '%s' LIKE useragent ORDER BY LENGTH(useragent) DESC", $user_agent, 0, 1));
 
     // Store user agent data in the cache
     cache_set($user_agent, $user_agent_properties, 'cache_browscap');
