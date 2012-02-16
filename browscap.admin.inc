@@ -17,7 +17,7 @@ function browscap_settings_form(&$form_state) {
   }
 
   $form['browscap_data_status'] = array(
-    '#markup' => '<p>' . t('Current browscap data version: %fileversion.', array('%fileversion' => $version)) . '</p>',
+    '#value' => '<p>' . t('Current browscap data version: %fileversion.', array('%fileversion' => $version)) . '</p>',
   );
   $form['browscap_update_interval'] = array(
     '#type' => 'textfield',
