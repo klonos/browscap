@@ -162,7 +162,7 @@ function browscap_get_browser($user_agent = NULL) {
 
   // Attempt to find a cached user agent
   // Otherwise store the user agent data in the cache
-  if ($cache != 0 && ($cache->created > time() - 60 * 60 * 24)) {
+  if (!empty($cache) && ($cache->created > time() - 60 * 60 * 24)) {
     $user_agent_properties = $cache->data;
   }
   else {
