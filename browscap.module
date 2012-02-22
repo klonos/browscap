@@ -73,6 +73,22 @@ function browscap_menu() {
   return $items;
 }
 
+ /**
+ * Implements hook_help().
+ */
+function browscap_help($path, $arg) {
+  switch ($path) {
+    case 'admin/settings/browscap':
+      return '<p>' . t('Settings for user agent detection and the log that Browscap will keep about user agents that visit the site. See <a href="@statistics">user agent statistics</a> for the actual information.', array('@statistics' => url('admin/reports/browscap'))) . '</p>';
+    case 'admin/reports/browscap':
+      return '<p>' . t('This page displays the most popular visiting user agents.') . '</p>';
+    case 'admin/reports/browscap/browsers':
+      return '<p>' . t('This page displays the most popular visiting user agents which have been classified as browsers.') . '</p>';
+    case 'admin/reports/browscap/crawlers':
+      return '<p>' . t('This page displays the most popular visiting user agents which have been classified as crawlers.') . '</p>';
+  }
+}
+
 /**
  * Implementation of hook_exit().
  */
