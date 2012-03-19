@@ -49,7 +49,7 @@ function _record_user_agent($skip_futher_recording = FALSE, $bypass_monitoring =
       // Create a new row to store counters for the user agent
       db_query("INSERT INTO {browscap_statistics} (parent,counter,is_crawler) VALUES('%s', 1, %d)", $user_agent_string, $user_agent_crawler);
     }
-    }
+  }
 
   // Change the status of user agent monitoring when necessary
   if ($skip_futher_recording == TRUE) {
