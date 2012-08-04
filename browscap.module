@@ -4,6 +4,12 @@
  * Replacement for PHP's get_browser() function.
  */
 
+// Drupal 7 defines a constant REQUEST_TIME which is not available in Drupal 6
+// Define the same constant to simplify backporting code from Browscap 7.x
+if (!defined('REQUEST_TIME')) {
+  define('REQUEST_TIME', time());
+}
+
 // Include browscap data import and user agent recording functions
 include_once('import.inc');
 include_once('record.inc');
