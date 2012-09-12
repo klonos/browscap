@@ -64,5 +64,5 @@ function browscap_refresh_submit($form, &$form_state) {
   _browscap_import(FALSE);
 
   // Record when the browscap information was updated
-  variable_set('browscap_imported', REQUEST_TIME);
+  variable_set('browscap_imported', time());
 }
