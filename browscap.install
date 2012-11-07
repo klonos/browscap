@@ -40,27 +40,6 @@ function browscap_schema() {
     ),
     'primary key' => array('useragent'),
   );
-  $schema['browscap_statistics'] = array(
-    'fields' => array(
-      'parent' => array(
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-        'default' => '',
-      ),
-      'counter' => array(
-        'type' => 'int',
-        'not null' => TRUE,
-        'default' => 0,
-      ),
-      'is_crawler' => array(
-        'type' => 'int',
-        'size' => 'tiny',
-        'not null' => TRUE,
-      ),
-    ),
-    'primary key' => array('parent'),
-  );
   $schema['cache_browscap'] = array(
     'fields' => array(
       'cid' => array(
@@ -111,7 +90,6 @@ function browscap_uninstall() {
   variable_del('browscap_version');
   variable_del('browscap_enable_automatic_updates');
   variable_del('browscap_automatic_updates_timer');
-  variable_del('browscap_enable_user_agent_log');
 }
 
 /**
