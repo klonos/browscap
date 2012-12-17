@@ -63,9 +63,7 @@ function browscap_uninstall() {
 function browscap_update_6200() {
   $ret = array();
 
-  if (db_table_exists('browscap_statistics')) {
-    db_drop_table($ret, 'browscap_statistics');
-  }
+  db_drop_table($ret, 'browscap_statistics');
 
   return $ret;
 }
