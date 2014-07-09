@@ -5,7 +5,7 @@
  */
 
 // Include browscap data import and user agent recording functions
-include_once('import.inc');
+include_once 'import.inc';
 
 /**
  * Implements hook_permission().
@@ -71,7 +71,9 @@ function browscap_cron() {
  * Provide data about a user agent string or the current user agent.
  *
  * @param string $user_agent
- *   Optional user agent string to test. If empty, use the value from the current request.
+ *   Optional user agent string to test. If empty, use the value from the
+ *   current request.
+ *
  * @return array
  *   An array of information about the user agent.
  */
