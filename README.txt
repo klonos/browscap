@@ -20,11 +20,13 @@ to retrieve and update its user agent database.
 
 Note: Some hosting companies have this capability blocked.
 
+
 Installation
 ------------
 
 Browscap can be installed via the standard Drupal installation process.
 http://drupal.org/node/895232
+
 
 API
 ---
@@ -34,6 +36,13 @@ anywhere they would otherwise call the PHP get_browser()
 (http://us3.php.net/manual/en/function.get-browser.php) function.
 
 Note: browser_name_regex is not returned.
+
+
+Drush integration
+-----------------
+
+To import the data via drush, use `drush browscap-import`.
+
 
 Credits
 -------

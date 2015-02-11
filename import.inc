@@ -4,16 +4,30 @@
  * Browscap data import functions.
  */
 
+define('BROWSCAP_IMPORT_OK', 0);
+define('BROWSCAP_IMPORT_VERSION_ERROR', 1);
+define('BROWSCAP_IMPORT_NO_NEW_VERSION', 2);
+define('BROWSCAP_IMPORT_DATA_ERROR', 3);
+
 /**
  * Helper function to update the browscap data.
  *
  * @param bool $cron
  *   Optional import environment. If false, display status messages to the user
  *   in addition to logging information with the watchdog.
+ *
+ * @return int
+ *   A code indicating the result:
+ *   - BROWSCAP_IMPORT_OK: New data was imported.
+ *   - BROWSCAP_IMPORT_NO_NEW_VERSION: No new data version was available.
+ *   - BROWSCAP_IMPORT_VERSION_ERROR: Checking the current data version failed.
+ *   - BROWSCAP_IMPORT_DATA_ERROR: The data could not be downloaded or parsed.
  */
 function _browscap_import($cron = TRUE) {
   // Check the local browscap data version number.
   $local_version = variable_get('browscap_version', 0);
+
+  watchdog('browscap', 'Checking for new browscap version...');
 
   // Retrieve the current browscap data version number using HTTP.
   $current_version = drupal_http_request('http://www.browscap.org/version-number');
@@ -28,7 +42,7 @@ function _browscap_import($cron = TRUE) {
       drupal_set_message(t("Couldn't check version: %error", array('%error' => $current_version->error)), 'error');
     }
 
-    return;
+    return BROWSCAP_IMPORT_VERSION_ERROR;
   }
 
   // Sanitize the returned version number.
@@ -45,7 +59,7 @@ function _browscap_import($cron = TRUE) {
       drupal_set_message(t('No new version of browscap to import'));
     }
 
-    return;
+    return BROWSCAP_IMPORT_NO_NEW_VERSION;
   }
 
   // Set options for downloading data with or without compression.
@@ -73,7 +87,7 @@ function _browscap_import($cron = TRUE) {
       drupal_set_message(t("Couldn't retrieve updated browscap: %error", array('%error' => $browscap_data->error)), 'error');
     }
 
-    return;
+    return BROWSCAP_IMPORT_DATA_ERROR;
   }
 
   // Decompress the downloaded data if it is compressed.
@@ -161,8 +175,9 @@ function _browscap_import($cron = TRUE) {
     // Clear the browscap data cache.
     cache_clear_all('*', 'cache_browscap', TRUE);
 
-    // Update the browscap version.
+    // Update the browscap version and imported time.
     variable_set('browscap_version', $current_version);
+    variable_set('browscap_imported', REQUEST_TIME);
 
     // Log a message with the watchdog.
     watchdog('browscap', 'New version of browscap imported: %version', array('%version' => $current_version));
@@ -171,5 +186,9 @@ function _browscap_import($cron = TRUE) {
     if ($cron == FALSE) {
       drupal_set_message(t('New version of browscap imported: %version', array('%version' => $current_version)));
     }
+
+    return BROWSCAP_IMPORT_OK;
   }
+
+  return BROWSCAP_IMPORT_DATA_ERROR;
 }
