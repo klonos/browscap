@@ -137,40 +137,8 @@ function _browscap_import($cron = TRUE) {
     // The version information is the first entry in the array.
     $version = array_shift($browscap_data);
 
-    // Store the data available for each user agent.
-    foreach ($browscap_data as $key => $values) {
-      // Store the current value.
-      $e = $values;
-
-      // Create an array to hold the last parent.
-      $last_parent = array();
-
-      // Recurse through the available user agent information.
-      while (isset($values['Parent']) && $values['Parent'] !== $last_parent) {
-        $values = isset($browscap_data[$values['Parent']]) ? $browscap_data[$values['Parent']] : array();
-        $e = array_merge($values, $e);
-        $last_parent = $values;
-      }
-
-      // Replace '*?' with '%_'.
-      $user_agent = strtr($key, '*?', '%_');
-
-      // Change all array keys to lowercase.
-      $e = array_change_key_case($e);
-
-      // Delete all data about the current user agent from the database.
-      db_delete('browscap')
-        ->condition('useragent', $user_agent)
-        ->execute();
-
-      // Insert all data about the current user agent into the database.
-      db_insert('browscap')
-        ->fields(array(
-         'useragent' => $user_agent,
-         'data' => serialize($e),
-        ))
-        ->execute();
-    }
+    // Save parsed Browscap data.
+    _browscap_save_parsed_data($browscap_data);
 
     // Clear the browscap data cache.
     cache_clear_all('*', 'cache_browscap', TRUE);
@@ -191,4 +159,77 @@ function _browscap_import($cron = TRUE) {
   }
 
   return BROWSCAP_IMPORT_DATA_ERROR;
+}
+
+/**
+ * Saves parsed Browscap data.
+ *
+ * The purpose of this function is to perform the queries on the {browscap}
+ * table as a transaction. This vastly improves performance with database
+ * engines such as InnoDB and ensures that queries will work while new data
+ * is being imported.
+ *
+ * @param array $browscap_data
+ *   Browscap data that has been parsed with parse_ini_string() or
+ *   parse_ini_file().
+ */
+function _browscap_save_parsed_data(&$browscap_data) {
+  // Start a transaction. The variable is unused. That's on purpose.
+  $transaction = db_transaction();
+
+  // Delete all data from database.
+  db_delete('browscap')->execute();
+
+  // Prepare the data for insertion.
+  $import_data = array();
+  foreach ($browscap_data as $key => $values) {
+    // Store the current value.
+    $original_values = $values;
+
+    // Replace '*?' with '%_'.
+    $user_agent = strtr($key, '*?', '%_');
+
+    // Remove trailing spaces to prevent "duplicate entry" errors. Databases
+    // such as MySQL do not preserve trailing spaces when storing VARCHARs.
+    $user_agent = rtrim($user_agent);
+
+    // Change all array keys to lowercase.
+    $original_values = array_change_key_case($original_values);
+
+    // Add to array of data to import.
+    $import_data[$user_agent] = $original_values;
+
+    // Remove processed data to reduce memory usage.
+    unset($browscap_data[$key]);
+  }
+
+  // Get user agents to insert, removing case-insensitive duplicates.
+  $user_agents = array_keys($import_data);
+  $user_agents = array_intersect_key($user_agents, array_unique(array_map('strtolower', $user_agents)));
+
+  // Insert all data about user agents into database in chunks.
+  $user_agents_chunks = array_chunk($user_agents, 1000);
+  foreach ($user_agents_chunks as $user_agents_chunk) {
+    $query = db_insert('browscap')
+      ->fields(array('useragent', 'data'));
+    foreach ($user_agents_chunk as $user_agent) {
+      $values = $import_data[$user_agent];
+
+      // Recurse through the available user agent information.
+      $previous_parent = NULL;
+      $parent = isset($values['parent']) ? $values['parent'] : FALSE;
+      while ($parent && $parent !== $previous_parent) {
+        $parent_values = isset($import_data[$parent]) ? $import_data[$parent] : array();
+        $values = array_merge($parent_values, $values);
+        $previous_parent = $parent;
+        $parent = isset($parent_values['parent']) ? $parent_values['parent'] : FALSE;
+      }
+
+      $query->values(array(
+        'useragent' => $user_agent,
+        'data' => serialize($values),
+      ));
+    }
+    $query->execute();
+  }
 }
