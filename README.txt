@@ -21,6 +21,15 @@ to retrieve and update its user agent database.
 Note: Some hosting companies have this capability blocked.
 
 
+Recommendations
+---------------
+
+If you are using MySQL, it is recommended to use InnoDB and not MyISAM as the
+table storage engine. (InnoDB is the default for Drupal 7.) MyISAM does not
+support transactions, and without transactions Browscap may not return correct
+browser information while new Browscap data is being loaded.
+
+
 Installation
 ------------
 
