@@ -30,7 +30,7 @@ function _browscap_import($cron = TRUE) {
   watchdog('browscap', 'Checking for new browscap version...');
 
   // Retrieve the current browscap data version number using HTTP.
-  $current_version = drupal_http_request('http://www.browscap.org/version-number');
+  $current_version = drupal_http_request('https://www.browscap.org/version-number');
 
   // Log an error if the browscap version number could not be retrieved.
   if (isset($current_version->error)) {
@@ -75,7 +75,7 @@ function _browscap_import($cron = TRUE) {
   }
 
   // Retrieve the browscap data using HTTP.
-  $browscap_data = drupal_http_request('http://www.browscap.org/stream?q=PHP_BrowsCapINI', $options);
+  $browscap_data = drupal_http_request('https://www.browscap.org/stream?q=PHP_BrowsCapINI', $options);
 
   // Log an error if the browscap data could not be retrieved.
   if (isset($browscap_data->error) || empty($browscap_data)) {
