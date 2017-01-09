@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains Drupal\browscap\BrowscapImporter.
- */
-
 namespace Drupal\browscap;
 
 use Drupal\Core\Database\Database;

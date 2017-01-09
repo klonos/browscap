@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains Drupal\browscap\BrowscapEndpoint.
- */
-
 namespace Drupal\browscap;
 
 use Drupal\Component\Utility\SafeMarkup;

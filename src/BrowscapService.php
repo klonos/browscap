@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains Drupal\browscap\BrowscapService.
- */
-
 namespace Drupal\browscap;
 
 /**
