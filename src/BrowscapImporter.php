@@ -3,6 +3,8 @@
 namespace Drupal\browscap;
 
 use Drupal\Core\Database\Database;
+use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Cache\CacheBackendInterface;
 
 /**
  * Class BrowscapImporter.
@@ -17,8 +19,37 @@ class BrowscapImporter {
   const BROWSCAP_IMPORT_DATA_ERROR = -3;
 
   /**
+   * Config Factory Interface.
+   *
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   */
+  protected $config;
+
+  /**
+   * A cache backend interface.
+   *
+   * @var \Drupal\Core\Cache\CacheBackendInterface
+   */
+  protected $cache;
+
+  /**
+   * Client constructor.
+   *
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config
+   *   Config Factory Interface.
+   * @param \Drupal\Core\Cache\CacheBackendInterface $cache
+   *   Cache backend instance to use.
+   */
+  public function __construct(ConfigFactoryInterface $config, CacheBackendInterface $cache) {
+    $this->config = $config;
+    $this->cache = $cache;
+  }
+
+  /**
    * Helper function to update the browscap data.
    *
+   * @param BrowscapEndpoint $browscap
+   *   The endpoint service for Browscap
    * @param bool $cron
    *   Optional import environment. If false, display status messages to the user
    *   in addition to logging information with the watchdog.
@@ -30,9 +61,9 @@ class BrowscapImporter {
    *   - BROWSCAP_IMPORT_VERSION_ERROR: Checking the current data version failed.
    *   - BROWSCAP_IMPORT_DATA_ERROR: The data could not be downloaded or parsed.
    */
-  static function import(BrowscapEndpoint $browscap, $cron = TRUE) {
+   public function import(BrowscapEndpoint $browscap, $cron = TRUE) {
 
-    $config = \Drupal::configFactory()->getEditable('browscap.settings');
+    $config = $this->config->getEditable('browscap.settings');
 
     /*
      * Check if there is a new version
@@ -67,14 +98,14 @@ class BrowscapImporter {
     $browscap_data = $browscap->getBrowscapData($cron);
 
     // Process the browscap data.
-    $result = static::processData($browscap_data);
+    $result = $this->processData($browscap_data);
     //If it's not an array, it's an error.
     if ($result != static::BROWSCAP_IMPORT_OK) {
       return $result;
     }
 
     // Clear the browscap data cache.
-    \Drupal::cache('browscap')->invalidateAll();
+    $this->cache->invalidateAll();
 
     // Update the browscap version and imported time.
     $config->set('version', $current_version)
@@ -103,23 +134,28 @@ class BrowscapImporter {
    * @param array $browscap_data
    *   Browscap data that has been parsed with parse_ini_string() or
    *   parse_ini_file().
+   *
+   * @return int
+   *   A code indicating the result:
+   *   - BROWSCAP_IMPORT_OK: New data was imported.
+   *   - BROWSCAP_IMPORT_DATA_ERROR: The data could not be downloaded or parsed.
    */
-  private static function processData(&$browscap_data) {
+  private function processData(&$browscap_data) {
     // Start a transaction. The variable is unused. That's on purpose.
-    $transaction = Database::getConnection()->startTransaction();;
+    $transaction = Database::getConnection()->startTransaction();
 
     // Delete all data from database.
     Database::getConnection()->delete('browscap')->execute();
 
     // Skip the header division.
-    $header_division = static::getNextIniDivision($browscap_data);
+    $header_division = $this->getNextIniDivision($browscap_data);
     // Assert that header division less than length of entire INI string.
     if (strlen($header_division) >= strlen($browscap_data)) {
       return static::BROWSCAP_IMPORT_DATA_ERROR;
     }
 
     // Skip the version division.
-    $version_divison = static::getNextIniDivision($browscap_data);
+    $version_divison = $this->getNextIniDivision($browscap_data);
     // Assert that Version section in division string.
     if (strpos($version_divison, "Browscap Version") === FALSE) {
       return static::BROWSCAP_IMPORT_DATA_ERROR;
@@ -127,29 +163,29 @@ class BrowscapImporter {
 
     // Get default properties division.
     // Assumption: The default properties division is the third division.
-    $default_properties_division = static::getNextIniDivision($browscap_data);
+    $default_properties_division = $this->getNextIniDivision($browscap_data);
     // Assert that DefaultProperties section in division string.
     if (strpos($default_properties_division, "[DefaultProperties]") === FALSE) {
       return static::BROWSCAP_IMPORT_DATA_ERROR;
     }
 
     // Parse and save remaining divisions.
-    while ($division = static::getNextIniDivision($browscap_data)) {
+    while ($division = $this->getNextIniDivision($browscap_data)) {
       // The division is concatenated with the default properties division
       // because each division has at least one section that inherits properties
       // from the default properties section.
       $divisions = $default_properties_division . $division;
-      $parsed_divisions = static::parseData($divisions);
+      $parsed_divisions = $this->parseData($divisions);
       if (!$parsed_divisions) {
         // There was an error parsing the data.
         return static::BROWSCAP_IMPORT_DATA_ERROR;
       }
-      static::saveParsedData($parsed_divisions);
+      $this->saveParsedData($parsed_divisions);
     }
     return static::BROWSCAP_IMPORT_OK;
   }
 
-  private static function parseData(&$browscap_data) {
+  private function parseData(&$browscap_data) {
     // Parse the returned browscap data.
 
     // Replace 'true' and 'false' with '1' and '0'
@@ -171,7 +207,7 @@ class BrowscapImporter {
     return $browscap_data;
   }
 
-  private static function saveParsedData(&$browscap_data) {
+  private function saveParsedData(&$browscap_data) {
     // Prepare the data for insertion.
     $import_data = array();
     foreach ($browscap_data as $key => $values) {
@@ -221,17 +257,17 @@ class BrowscapImporter {
     $query->execute();
   }
 
-  private static function getNextIniDivision(&$ini) {
+  private function getNextIniDivision(&$ini) {
     static $offset = 0;
     $division_begin = $offset;
-    $division_end = static::findIniDivisionEnd($ini, $division_begin);
+    $division_end = $this->findIniDivisionEnd($ini, $division_begin);
     $division_length = $division_end - $division_begin;
     $division = substr($ini, $division_begin, $division_length);
     $offset += $division_length;
     return $division;
   }
 
-  private static function findIniDivisionEnd(&$ini, $division_begin) {
+  private function findIniDivisionEnd(&$ini, $division_begin) {
     $header_prefix = ';;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;';
 
     // Start search from one character after offset so the header at the

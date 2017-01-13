@@ -36,7 +36,7 @@ function browscap_cron() {
     if (($last_imported + $automatic_update_timer) < REQUEST_TIME) {
       // Update the browscap information
       $endpoint = new BrowscapEndpoint();
-      BrowscapImporter::import($endpoint);
+      \Drupal::service('browscap.importer')->import($endpoint);
 
       // Record when the browscap information was updated
       $config->set('imported', REQUEST_TIME);

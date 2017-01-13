@@ -2,10 +2,10 @@
 
 namespace Drupal\browscap;
 
-use Drupal\Component\Utility\SafeMarkup;
-use Drupal\browscap\BrowscapImporter;
+use Drupal\Component\Utility\Html;
+use GuzzleHttp\Exception\RequestException;
 
-class BrowscapEndpoint{
+class BrowscapEndpoint {
 
   public function getVersion() {
     $config = \Drupal::config('browscap.settings');
@@ -29,7 +29,7 @@ class BrowscapEndpoint{
     }
 
     // Sanitize the returned version number
-    $current_version = SafeMarkup::checkPlain(trim($current_version));
+    $current_version = Html::escape(trim($current_version));
 
     return $current_version;
   }

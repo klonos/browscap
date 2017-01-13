@@ -110,7 +110,7 @@ class BrowscapAdmin extends ConfigFormBase {
   function refreshSubmit(array &$form, FormStateInterface $form_state) {
     // Update the browscap information
     $endpoint = new BrowscapEndpoint();
-    BrowscapImporter::import($endpoint, FALSE);
+    \Drupal::service('browscap.importer')->import($endpoint, FALSE);
 
     // Record when the browscap information was updated
     $this->config('browscap.settings')

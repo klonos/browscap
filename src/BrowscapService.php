@@ -2,12 +2,44 @@
 
 namespace Drupal\browscap;
 
+use Drupal\Core\Cache\CacheBackendInterface;
+use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Component\Utility\Html;
+use Drupal\Core\Database\Database;
+
 /**
  * Class BrowscapService.
  *
  * @package Drupal\browscap
  */
 class BrowscapService {
+
+  /**
+   * Config Factory Interface.
+   *
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   */
+  protected $config;
+
+  /**
+   * A cache backend interface.
+   *
+   * @var \Drupal\Core\Cache\CacheBackendInterface
+   */
+  protected $cache;
+
+  /**
+   * Client constructor.
+   *
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config
+   *   Config Factory Interface.
+   * @param \Drupal\Core\Cache\CacheBackendInterface $cache
+   *   Cache backend instance to use.
+   */
+  public function __construct(ConfigFactoryInterface $config, CacheBackendInterface $cache) {
+    $this->config = $config;
+    $this->cache = $cache;
+  }
 
   /**
    * Provide data about a user agent string or the current user agent.
@@ -19,21 +51,19 @@ class BrowscapService {
    */
   function getBrowser($user_agent = NULL) {
 
-    $cache = \Drupal::cache('browscap');
-
     // Determine the current user agent if a user agent was not specified
     if ($user_agent != NULL) {
-      $user_agent = \Drupal\Component\Utility\Html::escape(trim($user_agent));
+      $user_agent = Html::escape(trim($user_agent));
     }
     elseif ($user_agent == NULL && isset($_SERVER['HTTP_USER_AGENT'])) {
-      $user_agent = \Drupal\Component\Utility\Html::escape(trim($_SERVER['HTTP_USER_AGENT']));
+      $user_agent = Html::escape(trim($_SERVER['HTTP_USER_AGENT']));
     }
     else {
       $user_agent = 'Default Browser';
     }
 
     // Check the cache for user agent data
-    $cache_data = $cache->get($user_agent);
+    $cache_data = $this->cache->get($user_agent);
 
     // Attempt to find a cached user agent
     // Otherwise store the user agent data in the cache
@@ -45,14 +75,14 @@ class BrowscapService {
       // The useragent column contains the wildcarded pattern to match against our
       // full-length string while the ORDER BY chooses the most-specific matching
       // pattern
-      $user_agent_properties = db_query("SELECT * FROM {browscap} WHERE :useragent LIKE useragent ORDER BY LENGTH(useragent) DESC", array(':useragent' => $user_agent))
+      $user_agent_properties = Database::getConnection()->query("SELECT * FROM {browscap} WHERE :useragent LIKE useragent ORDER BY LENGTH(useragent) DESC", array(':useragent' => $user_agent))
         ->fetchObject();
 
       // Serialize the property data for caching
       $serialized_property_data = serialize($user_agent_properties);
 
       // Store user agent data in the cache
-      $cache->set($user_agent, $serialized_property_data);
+      $this->cache->set($user_agent, $serialized_property_data);
     }
 
     // Create an array to hold the user agent's properties
