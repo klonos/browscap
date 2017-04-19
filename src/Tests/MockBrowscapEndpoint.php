@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains Drupal\browscap\Tests\MockBrowscapEndpoint.
- */
-
 namespace Drupal\browscap\Tests;
 
 use Drupal\browscap\BrowscapEndpoint;

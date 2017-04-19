@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Definition of Drupal\browscap\Tests\BrowscapImportTest.
- */
-
 namespace Drupal\browscap\Tests;
 
 use Drupal\browscap\BrowscapImporter;
