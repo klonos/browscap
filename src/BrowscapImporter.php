@@ -113,11 +113,11 @@ class BrowscapImporter {
       ->save();
 
     // Log a message with the watchdog.
-    \Drupal::logger('browscap')->notice('New version of browscap imported: %version', array('%version' => $current_version));
+    \Drupal::logger('browscap')->notice('New version of browscap imported: %version', ['%version' => $current_version]);
 
     // Display a message to user if the update process was triggered manually.
     if ($cron == FALSE) {
-      drupal_set_message(t('New version of browscap imported: %version', array('%version' => $current_version)));
+      drupal_set_message(t('New version of browscap imported: %version', ['%version' => $current_version]));
     }
 
     return static::BROWSCAP_IMPORT_OK;
@@ -190,14 +190,14 @@ class BrowscapImporter {
 
     // Replace 'true' and 'false' with '1' and '0'
     $browscap_data = preg_replace(
-      array(
+      [
         '/=\s*"?true"?\s*$/m',
         '/=\s*"?false"?\s*$/m',
-      ),
-      array(
+      ],
+      [
         "=1",
         "=0",
-      ),
+      ],
       $browscap_data
     );
 
@@ -209,7 +209,7 @@ class BrowscapImporter {
 
   private function saveParsedData(&$browscap_data) {
     // Prepare the data for insertion.
-    $import_data = array();
+    $import_data = [];
     foreach ($browscap_data as $key => $values) {
       // Store the current value.
       $original_values = $values;
@@ -231,13 +231,13 @@ class BrowscapImporter {
       unset($browscap_data[$key]);
     }
 
-    $query = db_insert('browscap')->fields(array('useragent', 'data'));
+    $query = db_insert('browscap')->fields(['useragent', 'data']);
     foreach ($import_data as $user_agent => $values) {
       // Recurse through the available user agent information.
       $previous_parent = NULL;
       $parent = isset($values['parent']) ? $values['parent'] : FALSE;
       while ($parent && $parent !== $previous_parent) {
-        $parent_values = isset($import_data[$parent]) ? $import_data[$parent] : array();
+        $parent_values = isset($import_data[$parent]) ? $import_data[$parent] : [];
         $values = array_merge($parent_values, $values);
         $previous_parent = $parent;
         $parent = isset($parent_values['parent']) ? $parent_values['parent'] : FALSE;
@@ -249,10 +249,10 @@ class BrowscapImporter {
         continue;
       }
 
-      $query->values(array(
+      $query->values([
         'useragent' => $user_agent,
         'data' => serialize($values),
-      ));
+      ]);
     }
     $query->execute();
   }

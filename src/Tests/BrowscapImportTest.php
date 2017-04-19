@@ -12,7 +12,7 @@ use Drupal\simpletest\WebTestBase;
  */
 class BrowscapImportTest extends WebTestBase {
 
-  public static $modules = array('browscap');
+  public static $modules = ['browscap'];
 
   /**
    * Tests importing then querying Browscap data.

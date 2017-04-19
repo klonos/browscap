@@ -24,7 +24,7 @@ class BrowscapEndpoint {
     if (isset($current_version->error)) {
       // Log a message with the watchdog
       \Drupal::logger('browscap')
-        ->error("Couldn't check version: %error", array('%error' => $current_version->error));
+        ->error("Couldn't check version: %error", ['%error' => $current_version->error]);
       return BrowscapImporter::BROWSCAP_IMPORT_VERSION_ERROR;
     }
 
@@ -40,13 +40,13 @@ class BrowscapEndpoint {
 
     // Set options for downloading data with or without compression.
     if (function_exists('gzdecode')) {
-      $options = array(
-        'headers' => array('Accept-Encoding' => 'gzip'),
-      );
+      $options = [
+        'headers' => ['Accept-Encoding' => 'gzip'],
+      ];
     } else {
       // The download takes over ten times longer without gzip, and may exceed
       // the default timeout of 30 seconds, so we increase the timeout.
-      $options = array('timeout' => 600);
+      $options = ['timeout' => 600];
     }
 
     // Retrieve the browscap data using HTTP
@@ -65,11 +65,11 @@ class BrowscapEndpoint {
     if (isset($response->error) || empty($response)) {
       // Log a message with the watchdog
       \Drupal::logger('browscap')
-        ->error("Couldn't retrieve updated browscap: %error", array('%error' => $browscap_data->error));
+        ->error("Couldn't retrieve updated browscap: %error", ['%error' => $browscap_data->error]);
 
       // Display a message to the user if the update process was triggered manually
       if ($cron == FALSE) {
-        drupal_set_message(t("Couldn't retrieve updated browscap: %error", array('%error' => $response->error)), 'error');
+        drupal_set_message(t("Couldn't retrieve updated browscap: %error", ['%error' => $response->error]), 'error');
       }
 
       return BrowscapImporter::BROWSCAP_IMPORT_DATA_ERROR;

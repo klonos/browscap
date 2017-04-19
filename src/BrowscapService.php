@@ -75,7 +75,7 @@ class BrowscapService {
       // The useragent column contains the wildcarded pattern to match against our
       // full-length string while the ORDER BY chooses the most-specific matching
       // pattern
-      $user_agent_properties = Database::getConnection()->query("SELECT * FROM {browscap} WHERE :useragent LIKE useragent ORDER BY LENGTH(useragent) DESC", array(':useragent' => $user_agent))
+      $user_agent_properties = Database::getConnection()->query("SELECT * FROM {browscap} WHERE :useragent LIKE useragent ORDER BY LENGTH(useragent) DESC", [':useragent' => $user_agent])
         ->fetchObject();
 
       // Serialize the property data for caching
@@ -86,7 +86,7 @@ class BrowscapService {
     }
 
     // Create an array to hold the user agent's properties
-    $properties = array();
+    $properties = [];
 
     // Return an array of user agent properties
     if (isset($user_agent_properties)) {
